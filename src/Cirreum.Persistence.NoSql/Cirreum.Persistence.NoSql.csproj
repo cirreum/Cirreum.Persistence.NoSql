@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<Description>The Cirreum Persistence NoSql Library.</Description>
+		<PackageTags>cirreum,nosql,persistence</PackageTags>
+	</PropertyGroup>	
+
+</Project>
