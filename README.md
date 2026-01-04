@@ -1,8 +1,8 @@
 # Cirreum Persistence NoSql Library
 
-[![NuGet Version](https://img.shields.io/nuget/v/Cirreum.Persistence.svg?style=flat-square)](https://www.nuget.org/packages/Cirreum.Persistence/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/Cirreum.Persistence.svg?style=flat-square)](https://www.nuget.org/packages/Cirreum.Persistence/)
-[![GitHub Release](https://img.shields.io/github/v/release/cirreum/Cirreum.Persistence?style=flat-square)](https://github.com/cirreum/Cirreum.Persistence/releases)
+[![NuGet Version](https://img.shields.io/nuget/v/Cirreum.Persistence.NoSql.svg?style=flat-square)](https://www.nuget.org/packages/Cirreum.Persistence.NoSql/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Cirreum.Persistence.NoSql.svg?style=flat-square)](https://www.nuget.org/packages/Cirreum.Persistence.NoSql/)
+[![GitHub Release](https://img.shields.io/github/v/release/cirreum/Cirreum.Persistence.NoSql?style=flat-square)](https://github.com/cirreum/Cirreum.Persistence.NoSql/releases)
 
 A comprehensive .NET persistence NoSql based abstraction library that provides type-safe, feature-rich repository patterns for data access operations without external dependencies. This library offers a clean separation between your domain logic and persistence concerns through well-defined interfaces and base implementations
 
