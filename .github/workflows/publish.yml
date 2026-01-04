@@ -36,13 +36,13 @@ jobs:
       run: echo "Building version ${{ steps.get_version.outputs.VERSION }}"
     
     - name: Restore dependencies
-      run: dotnet restore Cirreum.Persistence.slnx
+      run: dotnet restore Cirreum.Persistence.NoSql.slnx
     
     - name: Build
-      run: dotnet build Cirreum.Persistence.slnx --configuration Release --no-restore -p:Version=${{ steps.get_version.outputs.VERSION }}
+      run: dotnet build Cirreum.Persistence.NoSql.slnx --configuration Release --no-restore -p:Version=${{ steps.get_version.outputs.VERSION }}
     
     - name: Pack
-      run: dotnet pack Cirreum.Persistence.slnx --configuration Release --no-build -p:Version=${{ steps.get_version.outputs.VERSION }} -p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output ../artifacts
+      run: dotnet pack Cirreum.Persistence.NoSql.slnx --configuration Release --no-build -p:Version=${{ steps.get_version.outputs.VERSION }} -p:PackageVersion=${{ steps.get_version.outputs.VERSION }} --output ../artifacts
     
     - name: NuGet login (OIDC -> temp API key)
       uses: NuGet/login@v1
