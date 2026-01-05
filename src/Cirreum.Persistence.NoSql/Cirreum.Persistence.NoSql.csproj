@@ -3,6 +3,10 @@
 	<PropertyGroup>
 		<Description>The Cirreum Persistence NoSql Library.</Description>
 		<PackageTags>cirreum,nosql,persistence</PackageTags>
-	</PropertyGroup>	
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Cirreum.Result" Version="1.0.10" />
+	</ItemGroup>	
 
 </Project>

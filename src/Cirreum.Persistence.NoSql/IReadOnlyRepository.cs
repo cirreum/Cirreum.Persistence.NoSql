@@ -334,8 +334,7 @@ public interface IReadOnlyRepository<TEntity> where TEntity : IEntity {
 	#region Paging Methods
 
 	/// <summary>
-	/// Gets a page of entities; if a <paramref name="continuationToken"/> is supplied, retrieves
-	/// the next available page.
+	/// Gets a page of entities using cursor-based (keyset) pagination.
 	/// </summary>
 	/// <param name="predicate">
 	/// A filter for the paging operation. If <see langword="null"/>, retrieves all entities.
@@ -344,44 +343,58 @@ public interface IReadOnlyRepository<TEntity> where TEntity : IEntity {
 	/// If <see langword="true"/>, includes entities marked as deleted; otherwise, excludes them.
 	/// </param>
 	/// <param name="pageSize">The maximum number of entities to return.</param>
-	/// <param name="continuationToken">A token from a previous page request.</param>
+	/// <param name="cursor">A cursor from a previous page request, or <see langword="null"/> to start from the beginning.</param>
 	/// <param name="cancellationToken">The cancellation token for asynchronous operations.</param>
-	/// <returns>An <see cref="IContinuationPage{T}"/> of <typeparamref name="TEntity"/> entities.</returns>
+	/// <returns>A <see cref="CursorResult{T}"/> containing the entities and pagination metadata.</returns>
 	/// <remarks>
-	/// Uses continuation tokens for efficient paging.
+	/// <para>
+	/// Cursor pagination provides stable results when data is being inserted or deleted, and performs
+	/// consistently regardless of how deep into the result set the client navigates. This makes it
+	/// ideal for large datasets, real-time data, and infinite scroll interfaces.
+	/// </para>
+	/// <para>
+	/// For scenarios requiring arbitrary page jumps or total counts, consider 
+	/// using <see cref="O:Cirreum.Persistence.IReadOnlyRepository`1.PageAsync"/> instead.
+	/// </para>
 	/// </remarks>
-	ValueTask<IContinuationPage<TEntity>> PageContinuationAsync(
+	ValueTask<CursorResult<TEntity>> PageCursorAsync(
 		Expression<Func<TEntity, bool>>? predicate,
 		bool includeDeleted,
 		int pageSize,
-		string? continuationToken,
+		string? cursor,
 		CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Gets a page of entities; if a <paramref name="continuationToken"/> is supplied, retrieves
-	/// the next available page.
+	/// Gets a page of entities using cursor-based (keyset) pagination.
 	/// This overload defaults to not including deleted entities.
 	/// </summary>
 	/// <param name="predicate">
 	/// A filter for the paging operation. If <see langword="null"/>, retrieves all entities.
 	/// </param>
 	/// <param name="pageSize">The maximum number of entities to return.</param>
-	/// <param name="continuationToken">A token from a previous page request.</param>
+	/// <param name="cursor">A cursor from a previous page request, or <see langword="null"/> to start from the beginning.</param>
 	/// <param name="cancellationToken">The cancellation token for asynchronous operations.</param>
-	/// <returns>An <see cref="IContinuationPage{T}"/> of <typeparamref name="TEntity"/> entities.</returns>
+	/// <returns>A <see cref="CursorResult{T}"/> containing the entities and pagination metadata.</returns>
 	/// <remarks>
-	/// Uses continuation tokens for efficient paging.
+	/// <para>
+	/// Cursor pagination provides stable results when data is being inserted or deleted, and performs
+	/// consistently regardless of how deep into the result set the client navigates. This makes it
+	/// ideal for large datasets, real-time data, and infinite scroll interfaces.
+	/// </para>
+	/// <para>
+	/// For scenarios requiring arbitrary page jumps or total counts, consider using <see cref="O:Cirreum.Persistence.IReadOnlyRepository`1.PageAsync"/> instead.
+	/// </para>
 	/// </remarks>
-	public ValueTask<IContinuationPage<TEntity>> PageContinuationAsync(
+	public ValueTask<CursorResult<TEntity>> PageCursorAsync(
 		Expression<Func<TEntity, bool>>? predicate,
 		int pageSize,
-		string? continuationToken,
+		string? cursor,
 		CancellationToken cancellationToken = default) {
-		return this.PageContinuationAsync(predicate, false, pageSize, continuationToken, cancellationToken);
+		return this.PageCursorAsync(predicate, false, pageSize, cursor, cancellationToken);
 	}
 
 	/// <summary>
-	/// Queries for a specific page of entities.
+	/// Queries for a specific page of entities using offset-based pagination.
 	/// </summary>
 	/// <param name="predicate">
 	/// A filter for the paging operation. If <see langword="null"/>, retrieves all entities.
@@ -389,48 +402,117 @@ public interface IReadOnlyRepository<TEntity> where TEntity : IEntity {
 	/// <param name="includeDeleted">
 	/// If <see langword="true"/>, includes entities marked as deleted; otherwise, excludes them.
 	/// </param>
-	/// <param name="pageNumber">The page number to retrieve.</param>
-	/// <param name="pageSize">The maximum number of entities to return.</param>
-	/// <param name="includeTotalCount">
-	/// If <see langword="true"/>, includes the total count of entities.
-	/// </param>
+	/// <param name="pageNumber">The 1-based page number to retrieve.</param>
+	/// <param name="pageSize">The maximum number of entities to return per page.</param>
 	/// <param name="cancellationToken">The cancellation token for asynchronous operations.</param>
-	/// <returns>
-	/// An <see cref="IOffSetPage{T}"/> query result containing the entities and, optionally, 
-	/// the total count.
-	/// </returns>
-	ValueTask<IOffSetPage<TEntity>> PageOffsetAsync(
+	/// <returns>A <see cref="PagedResult{T}"/> containing the entities and pagination metadata.</returns>
+	/// <remarks>
+	/// <para>
+	/// Offset pagination allows clients to jump to arbitrary pages and includes total counts.
+	/// This works well for smaller datasets and traditional paged interfaces with numbered pages.
+	/// </para>
+	/// <para>
+	/// <strong>Trade-offs:</strong> Typically requires two queries (count + data), performance degrades
+	/// on deep pages, and results can shift if data is inserted or deleted between requests.
+	/// </para>
+	/// <para>
+	/// For large datasets, real-time data, or infinite scroll interfaces where consistency matters,
+	/// consider using <see cref="O:Cirreum.Persistence.IReadOnlyRepository`1.PageCursorAsync"/> instead.
+	/// </para>
+	/// </remarks>
+	ValueTask<PagedResult<TEntity>> PageAsync(
 		Expression<Func<TEntity, bool>>? predicate,
 		bool includeDeleted,
 		int pageNumber,
 		int pageSize,
-		bool includeTotalCount,
 		CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// Queries for a specific page of entities.
+	/// Queries for a specific page of entities using offset-based pagination.
 	/// This overload defaults to not including deleted entities.
 	/// </summary>
 	/// <param name="predicate">
 	/// A filter for the paging operation. If <see langword="null"/>, retrieves all entities.
 	/// </param>
-	/// <param name="pageNumber">The page number to retrieve.</param>
-	/// <param name="pageSize">The maximum number of entities to return.</param>
-	/// <param name="includeTotalCount">
-	/// If <see langword="true"/>, includes the total count of entities.
-	/// </param>
+	/// <param name="pageNumber">The 1-based page number to retrieve.</param>
+	/// <param name="pageSize">The maximum number of entities to return per page.</param>
 	/// <param name="cancellationToken">The cancellation token for asynchronous operations.</param>
-	/// <returns>
-	/// An <see cref="IOffSetPage{T}"/> query result containing the entities and, optionally, 
-	/// the total count.
-	/// </returns>
-	public ValueTask<IOffSetPage<TEntity>> PageOffsetAsync(
+	/// <returns>A <see cref="PagedResult{T}"/> containing the entities and pagination metadata.</returns>
+	/// <remarks>
+	/// <para>
+	/// Offset pagination allows clients to jump to arbitrary pages and includes total counts.
+	/// This works well for smaller datasets and traditional paged interfaces with numbered pages.
+	/// </para>
+	/// <para>
+	/// <strong>Trade-offs:</strong> Typically requires two queries (count + data), performance degrades
+	/// on deep pages, and results can shift if data is inserted or deleted between requests.
+	/// </para>
+	/// <para>
+	/// For large datasets, real-time data, or infinite scroll interfaces where consistency matters,
+	/// consider using <see cref="O:Cirreum.Persistence.IReadOnlyRepository`1.PageCursorAsync"/> instead.
+	/// </para>
+	/// </remarks>
+	public ValueTask<PagedResult<TEntity>> PageAsync(
 		Expression<Func<TEntity, bool>>? predicate,
 		int pageNumber,
 		int pageSize,
-		bool includeTotalCount,
 		CancellationToken cancellationToken = default) {
-		return this.PageOffsetAsync(predicate, false, pageNumber, pageSize, includeTotalCount, cancellationToken);
+		return this.PageAsync(predicate, false, pageNumber, pageSize, cancellationToken);
+	}
+
+	/// <summary>
+	/// Gets a slice of entities with an indicator for whether more items exist.
+	/// </summary>
+	/// <param name="predicate">
+	/// A filter for the operation. If <see langword="null"/>, retrieves all entities.
+	/// </param>
+	/// <param name="includeDeleted">
+	/// If <see langword="true"/>, includes entities marked as deleted; otherwise, excludes them.
+	/// </param>
+	/// <param name="count">The maximum number of entities to return.</param>
+	/// <param name="cancellationToken">The cancellation token for asynchronous operations.</param>
+	/// <returns>A <see cref="SliceResult{T}"/> containing the entities and whether more exist.</returns>
+	/// <remarks>
+	/// <para>
+	/// Use this when you need a simple "load more" pattern without full pagination metadata.
+	/// Typically implemented by fetching N+1 items and checking if more exist.
+	/// </para>
+	/// <para>
+	/// This is ideal for scenarios where you don't need cursor stability or page numbers,
+	/// such as loading initial data with a "Show More" button, or batch processing.
+	/// </para>
+	/// </remarks>
+	ValueTask<SliceResult<TEntity>> SliceAsync(
+		Expression<Func<TEntity, bool>>? predicate,
+		bool includeDeleted,
+		int count,
+		CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// Gets a slice of entities with an indicator for whether more items exist.
+	/// This overload defaults to not including deleted entities.
+	/// </summary>
+	/// <param name="predicate">
+	/// A filter for the operation. If <see langword="null"/>, retrieves all entities.
+	/// </param>
+	/// <param name="count">The maximum number of entities to return.</param>
+	/// <param name="cancellationToken">The cancellation token for asynchronous operations.</param>
+	/// <returns>A <see cref="SliceResult{T}"/> containing the entities and whether more exist.</returns>
+	/// <remarks>
+	/// <para>
+	/// Use this when you need a simple "load more" pattern without full pagination metadata.
+	/// Typically implemented by fetching N+1 items and checking if more exist.
+	/// </para>
+	/// <para>
+	/// This is ideal for scenarios where you don't need cursor stability or page numbers,
+	/// such as loading initial data with a "Show More" button, or batch processing.
+	/// </para>
+	/// </remarks>
+	public ValueTask<SliceResult<TEntity>> SliceAsync(
+		Expression<Func<TEntity, bool>>? predicate,
+		int count,
+		CancellationToken cancellationToken = default) {
+		return this.SliceAsync(predicate, false, count, cancellationToken);
 	}
 
 	#endregion

@@ -88,18 +88,22 @@ public abstract record SoftDeleteEntity : Entity, IRestorableEntity
 // Expression-based queries
 var results = await repository.QueryAsync(x => x.Name.Contains("test"));
 
-// Pagination with continuation tokens
-var page = await repository.PageContinuationAsync(
-	predicate: x => x.IsActive, 
-	pageSize: 20, 
-	continuationToken: null);
+// Cursor-based pagination (recommended for large datasets)
+CursorResult<MyEntity> cursorPage = await repository.PageCursorAsync(
+	predicate: x => x.IsActive,
+	pageSize: 20,
+	cursor: null);
 
-// Offset-based pagination
-var offsetPage = await repository.PageOffsetAsync(
-	predicate: null, 
-	pageNumber: 1, 
-	pageSize: 10, 
-	includeTotalCount: true);
+// Offset-based pagination (for traditional paged UIs)
+PagedResult<MyEntity> pagedResult = await repository.PageAsync(
+	predicate: null,
+	pageNumber: 1,
+	pageSize: 10);
+
+// Slice for simple "load more" scenarios
+SliceResult<MyEntity> slice = await repository.SliceAsync(
+	predicate: x => x.IsActive,
+	count: 10);
 
 // Async enumeration for large datasets
 await foreach (var entity in repository.SequenceQueryAsync(x => x.Category == "Important"))
@@ -197,19 +201,28 @@ public record UserEntity : Entity {
 
 ## Pagination Support
 
-The library provides two pagination approaches:
+The library provides three pagination approaches via types from [Cirreum.Result](https://www.nuget.org/packages/Cirreum.Result/):
 
-### Continuation Token Paging (Recommended)
+### Cursor-Based Paging (Recommended)
 
-- More efficient for large datasets
-- Lower resource usage
-- Returns `IContinuationPage<T>` with continuation tokens
+- Stable results when data is being inserted or deleted
+- Consistent performance regardless of how deep into the result set
+- Ideal for large datasets, real-time data, and infinite scroll interfaces
+- Returns `CursorResult<T>` with `NextCursor`, `HasNextPage`, and optional `TotalCount`
 
-### Offset Paging
+### Offset-Based Paging
 
-- Traditional page number-based paging
-- Higher resource usage but familiar UX
-- Returns `IOffSetPage<T>` with page numbers and totals
+- Traditional page number-based paging with arbitrary page jumps
+- Includes total counts for displaying "Page X of Y"
+- Performance degrades on deep pages; results can shift between requests
+- Returns `PagedResult<T>` with `PageNumber`, `PageSize`, `TotalCount`, and `TotalPages`
+
+### Slice
+
+- Simple "load more" pattern without full pagination metadata
+- Fetches N+1 items to check if more exist
+- Ideal for "Show More" buttons or batch processing
+- Returns `SliceResult<T>` with `Items` and `HasMore`
 
 ## Timezone Support
 
@@ -232,15 +245,17 @@ entity.DeletedInTimeZone = "Asia/Tokyo";
 
 1. **Inherit from appropriate base classes**: Use `Entity` for full features, `BaseEntity` for minimal requirements
 2. **Implement partition strategy**: Override `GetPartitionKeyValue()` for custom partitioning
-3. **Use continuation paging**: Prefer continuation tokens over offset paging for performance
-4. **Batch same-partition entities**: Ensure batch operations only include entities from the same partition
-5. **Handle soft deletes**: Use `includeDeleted` parameter appropriately in queries
-6. **Leverage partial updates**: Use patch operations for efficient field-level updates
+3. **Use cursor paging**: Prefer `PageCursorAsync` over `PageAsync` for large datasets and infinite scroll
+4. **Use slice for simple scenarios**: Use `SliceAsync` when you just need "load more" without page numbers
+5. **Batch same-partition entities**: Ensure batch operations only include entities from the same partition
+6. **Handle soft deletes**: Use `includeDeleted` parameter appropriately in queries
+7. **Leverage partial updates**: Use patch operations for efficient field-level updates
 
 ## Dependencies
 
-This library has **zero external dependencies** and works with:
+This library has minimal dependencies:
 
+- [Cirreum.Result](https://www.nuget.org/packages/Cirreum.Result/) for pagination result types (`CursorResult<T>`, `PagedResult<T>`, `SliceResult<T>`)
 - System.Text.Json for serialization attributes
 - System.Linq.Expressions for query building
 
