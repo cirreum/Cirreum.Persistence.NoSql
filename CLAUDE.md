@@ -60,6 +60,18 @@ dotnet build  # Generates XML documentation automatically
 - **`[PartitionKeyPath("/path")]`**: Defines partition key path for persistence layer
 - **`[UniqueKey("keyname", "/path")]`**: Declares unique key constraints
 
+### Indexing Policy Attributes
+- **`[IndexingPolicy(IndexingMode.Consistent)]`**: Class-level, sets indexing mode and `Automatic` flag
+- **`[IncludedPath]`** / **`[IncludedPath("/path/?")]`**: Property-level, auto-derives path from `[JsonPropertyName]` or camelCase name if not explicit
+- **`[ExcludedPath("/path/*")]`**: Class-level, `AllowMultiple = true`
+- **`[CompositeIndex("groupName", order, position)]`**: Property-level, `AllowMultiple = true`, groups by name, orders by position
+- **`[SpatialIndex(SpatialType.Point)]`**: Property-level, `AllowMultiple = true`
+
+### Indexing Enums (framework-agnostic mirrors of Cosmos SDK types)
+- **`IndexingMode`**: `Consistent`, `Lazy`, `None`
+- **`CompositePathSortOrder`**: `Ascending`, `Descending`
+- **`SpatialType`**: `Point`, `LineString`, `Polygon`, `MultiPolygon`
+
 ### JSON Serialization Conventions
 - Uses `System.Text.Json` with specific property names:
   - `_etag` for ETag values

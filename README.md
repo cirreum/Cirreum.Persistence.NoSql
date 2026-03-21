@@ -192,12 +192,84 @@ public record UserEntity : Entity {
 
 	[UniqueKey("email-key", "/email")]
 	public string Email { get; set; }
-	
+
 	[UniqueKey("username-key", "/username")]
 	public string Username { get; set; }
 
 }
 ```
+
+### Indexing Policy Configuration
+
+Declaratively define indexing policies directly on entity classes. When the persistence provider supports auto-creation, these attributes drive the container's indexing policy.
+
+#### Indexing Mode and Behavior
+
+```csharp
+[IndexingPolicy(IndexingMode.Consistent, Automatic = true)]
+public record MyEntity : Entity;
+```
+
+#### Included and Excluded Paths
+
+```csharp
+[IndexingPolicy(IndexingMode.Consistent)]
+[ExcludedPath("/content/*")]
+[ExcludedPath("/*")]
+public record MyEntity : Entity {
+
+	[IncludedPath]
+	public string Status { get; set; }
+
+	[IncludedPath("/customPath/?")]
+	public string CustomField { get; set; }
+
+}
+```
+
+When no explicit path is provided, `[IncludedPath]` auto-derives the path from the `[JsonPropertyName]` attribute or camelCase property name as `/{name}/?`.
+
+#### Composite Indexes
+
+```csharp
+[IndexingPolicy(IndexingMode.Consistent)]
+[ExcludedPath("/*")]
+public record TaskItem : Entity {
+
+	[IncludedPath]
+	[CompositeIndex("type-client-date", CompositePathSortOrder.Ascending, position: 0)]
+	public string Type { get; set; }
+
+	[IncludedPath]
+	[CompositeIndex("type-client-date", CompositePathSortOrder.Ascending, position: 1)]
+	public string ClientId { get; set; }
+
+	[IncludedPath]
+	[CompositeIndex("type-client-date", CompositePathSortOrder.Descending, position: 2)]
+	public DateTimeOffset CreatedAt { get; set; }
+
+}
+```
+
+Properties are grouped into composite indexes by `GroupName` and ordered by `Position`. A property can participate in multiple composite index groups by applying the attribute multiple times.
+
+#### Spatial Indexes
+
+```csharp
+[IndexingPolicy(IndexingMode.Consistent)]
+public record LocationEntity : Entity {
+
+	[SpatialIndex(SpatialType.Point)]
+	public Location Coordinates { get; set; }
+
+}
+```
+
+#### Available Enums
+
+- **`IndexingMode`**: `Consistent`, `Lazy`, `None`
+- **`CompositePathSortOrder`**: `Ascending`, `Descending`
+- **`SpatialType`**: `Point`, `LineString`, `Polygon`, `MultiPolygon`
 
 ## Pagination Support
 
