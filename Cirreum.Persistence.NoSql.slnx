@@ -12,8 +12,9 @@
   <Folder Name="/publish/">
     <File Path=".github/workflows/publish.yml" />
   </Folder>
+  <Folder Name="/Solution Items/" />
   <Folder Name="/src/">
-    <File Path="Directory.Build.props" />
+    <File Path="src/Directory.Build.props" />
     <Project Path="src/Cirreum.Persistence.NoSql/Cirreum.Persistence.NoSql.csproj" />
   </Folder>
   <Folder Name="/_solution items/">
