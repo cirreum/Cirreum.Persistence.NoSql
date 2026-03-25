@@ -12,9 +12,14 @@ public abstract record BaseEntity : IEntity {
 
 	/// <inheritdoc />
 	/// <remarks>
-	/// Initialized with <see cref="Guid.NewGuid"/>.ToString().
+	/// Initialized with a globally unique identifier.
+	/// On .NET 9+ uses <c>Guid.CreateVersion7</c> for time-ordered IDs.
 	/// </remarks>
+#if NET9_0_OR_GREATER
+	public string Id { get; set; } = Guid.CreateVersion7().ToString();
+#else
 	public string Id { get; set; } = Guid.NewGuid().ToString();
+#endif
 
 	public string EntityType { get; init; }
 
